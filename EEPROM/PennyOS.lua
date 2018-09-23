@@ -19,13 +19,17 @@ local function move(tx,ty,tz)
   local dy = ty - cy
   local dz = tz - cz
   drone.move(dx,dy,dz)
-  while drone.getOffset() > 0.7 or drone.getVelocity() > 0.7 do end
+  while drone.getOffset() > 0.7 or drone.getVelocity() > 0.7 do
+	;
+  end
   cx,cy,cz = tx,ty,tz
 end
 
 local function goDock()
   move(DOCK.x, DOCK.y, DOCK.z)
-  while computer.energy() / computer.maxEnergy() < 0.99 do end 
+  while computer.energy() / computer.maxEnergy() < 0.99 do
+	;
+  end 
   drone.setLightColor(0x00ff00)
   computer.beep(783.99,.25)
   computer.beep(783.99,.25)
@@ -87,26 +91,23 @@ while true do
           elseif string.match(msg, "DOCK") then
             goDock()
           elseif string.match(msg, "GET_CHARGE") then
-            modem.send(client, PORT +1, "" .. getCharge())
+            modem.send(client, PORT + 1, "" .. computer.energy() / computer.maxEnergy())
           elseif string.match(msg, "DISCONNECT") then
             hasConnection = false
           elseif string.match(msg, "MAP") then
+			--this function is still broken
             local var = split(string.gsub(msg, "MAP", ""),";")
             if #var >= 2 then
 			  --check if offset is set
-			  if(ox == nil) then
-				ox = tonumber(var[1])
-				oz = tonumber(var[2])
-			  end
               -- map col and send to server
-			  move( ox - tonumber(var[1]),0,oz - tonumber(var[2]))
-              local sd = geo.scan(ox - tonumber(var[1]), oz - tonumber(var[2]))
+			  move(0 + tonumber(var[1]),0,0 + tonumber(var[2]))
+              local sd = geo.scan(0, 0)
               local list = "COL" .. tonumber(var[1]) .. ";" .. tonumber(var[2]) .. ";" .. #sd
               for k, d in pairs(sd) do
                 list = list .. ";" .. d
               end
-              modem.broadcast(PORT,list)
-			  move( ox + tonumber(var[1]),0,oz + tonumber(var[2]))
+              modem.broadcast(PORT + 1,list)
+			  move( 0 - tonumber(var[1]),0,0 - tonumber(var[2]))
             end
           end
         end
@@ -118,16 +119,16 @@ while true do
           client = sender
           hasConnection = true
           --tell host that they have full control
-          modem.send(client,PORT+1,"CONFIRMED")
+          modem.send(client,PORT + 1, "CONFIRMED")
 		  drone.setLightColor(0x00f0ff)
           drone.setLightColor(0x00ff00)
         end
       end
   end
 
-  if getCharge() < 0.5 and getCharge() > 0.1 then
+  if computer.energy() / computer.maxEnergy() < 0.5 and computer.energy() / computer.maxEnergy() > 0.1 then
     drone.setLightColor(0xff7f00)
-  elseif getCharge() < 0.1 then
+  elseif computer.energy() / computer.maxEnergy() < 0.1 then
     drone.setLightColor(0xff0000)
     goDock()
   end
