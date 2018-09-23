@@ -10,6 +10,8 @@ local MAX_DIST = 16
 local hasConnection
 local DOCK
 local cx, cy, cz
+local client
+local ox, oz
 
 --functions
 local function move(tx,ty,tz)
@@ -69,8 +71,6 @@ move(0,.5,0)
 drone.setStatusText("PENNY")
 drone.setLightColor(0x00ff00)
 
-local client
-
 --running loop
 while true do
   getWaypoints()
@@ -93,13 +93,20 @@ while true do
           elseif string.match(msg, "MAP") then
             local var = split(string.gsub(msg, "MAP", ""),";")
             if #var >= 2 then
+			  --check if offset is set
+			  if(ox == nil) then
+				ox = tonumber(var[1])
+				oz = tonumber(var[2])
+			  end
               -- map col and send to server
-              local sd = geo.scan(tonumber(var[1]), tonumber(var[2]))
+			  move( ox - tonumber(var[1]),0,oz - tonumber(var[2]))
+              local sd = geo.scan(ox - tonumber(var[1]), oz - tonumber(var[2]))
               local list = "COL" .. tonumber(var[1]) .. ";" .. tonumber(var[2]) .. ";" .. #sd
               for k, d in pairs(sd) do
                 list = list .. ";" .. d
               end
               modem.broadcast(PORT,list)
+			  move( ox + tonumber(var[1]),0,oz + tonumber(var[2]))
             end
           end
         end
